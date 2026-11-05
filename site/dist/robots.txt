@@ -3,4 +3,4 @@ Allow: /
 Disallow: /commande.html
 Disallow: /confirmation.html
 
-Sitemap: https://made-by-algerians-shop.prefix-unripe-7w.chatgpt.site/sitemap.xml
+Sitemap: https://belarbira3da97.github.io/web-site/sitemap.xml

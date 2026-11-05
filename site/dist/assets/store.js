@@ -65,7 +65,7 @@
   const cartKey = "mba-shop-cart-v2";
   let cart = [];
   try { cart = JSON.parse(localStorage.getItem(cartKey) || "[]"); } catch (_) { cart=[]; }
-  const SITE_URL = "https://made-by-algerians-shop.prefix-unripe-7w.chatgpt.site/";
+  const SITE_URL = "https://belarbira3da97.github.io/web-site/";
   const defaultShareImage = "assets/amine-imene-neighborhood.webp";
   const seoByFile = {
     "index.html":{title:"Vêtements streetwear algériens | MADE BY ALGERIANS",description:"Découvrez les T-shirts HOUMTI, hoodies, totebags et polos MADE BY ALGERIANS, fabriqués en Algérie et payables à la livraison."},
