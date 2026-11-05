@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
   pages: write
   id-token: write
 
@@ -38,6 +38,3 @@ jobs:
       - name: Publier
         id: deployment
         uses: actions/deploy-pages@v4
-
-      - name: Enregistrer la version publiée
-        run: git push origin "$GITHUB_SHA:refs/heads/pages-live" --force
