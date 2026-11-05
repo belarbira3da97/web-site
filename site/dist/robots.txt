@@ -1,0 +1,6 @@
+User-agent: *
+Allow: /
+Disallow: /commande.html
+Disallow: /confirmation.html
+
+Sitemap: https://made-by-algerians-shop.prefix-unripe-7w.chatgpt.site/sitemap.xml
