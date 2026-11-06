@@ -82,6 +82,12 @@
     :where(a,button,input,select,textarea,summary):focus-visible{outline:3px solid #ed2934;outline-offset:3px}
     :where(h1,h2,h3){text-wrap:balance;scroll-margin-top:120px}
     :where(a,button,select,summary){touch-action:manipulation}
+    .pro-scroll-progress{position:fixed;z-index:1000;inset:0 0 auto;height:3px;background:linear-gradient(90deg,var(--red),#ff6269 72%,#fff);transform:scaleX(0);transform-origin:left;pointer-events:none}
+    .motion-enabled main>.eyebrow,.motion-enabled main>h1,.motion-enabled main>.intro{opacity:0;transform:translateY(20px);transition:opacity .68s ease,transform .68s cubic-bezier(.2,.75,.2,1)}.motion-enabled.hero-ready main>.eyebrow,.motion-enabled.hero-ready main>h1,.motion-enabled.hero-ready main>.intro{opacity:1;transform:none}.motion-enabled.hero-ready main>.eyebrow{transition-delay:.06s}.motion-enabled.hero-ready main>h1{transition-delay:.14s}.motion-enabled.hero-ready main>.intro{transition-delay:.22s}
+    .pro-reveal{opacity:0;filter:blur(2px);transform:translateY(28px);transition:opacity .68s cubic-bezier(.2,.75,.2,1),transform .68s cubic-bezier(.2,.75,.2,1),filter .68s ease;transition-delay:calc(var(--reveal-order,0) * 70ms)}.pro-reveal.is-visible{opacity:1;filter:none;transform:none}
+    .service-card,.media-card,.contact{transition:transform .35s cubic-bezier(.2,.75,.2,1),border-color .25s,box-shadow .35s ease}.service-card:hover,.media-card:hover,.contact:hover{transform:translateY(-6px);box-shadow:0 22px 45px rgba(0,0,0,.24)}
+    .media-button,.back,.pro-cta{transition:transform .24s cubic-bezier(.2,.75,.2,1),box-shadow .24s,background-color .2s}.media-button:hover,.back:hover,.pro-cta:hover{transform:translateY(-3px);box-shadow:0 12px 26px rgba(0,0,0,.25)}.media-button:active,.back:active,.pro-cta:active{transform:scale(.985)}
+    @media(prefers-reduced-motion:reduce){.pro-scroll-progress{display:none}.pro-reveal,.motion-enabled main>*{opacity:1!important;filter:none!important;transform:none!important;transition:none!important}}
   </style>
   <script type="application/ld+json">{"@context":"https://schema.org","@type":"Organization","name":"MADE BY ALGERIANS","url":"https://belarbira3da97.github.io/web-site/","logo":"https://belarbira3da97.github.io/web-site/assets/logo-mark.png","email":"madebyalgerians@gmail.com","telephone":"+213792323644","sameAs":["https://www.instagram.com/madebyalgerians/","https://www.facebook.com/profile.php?id=61565057977805"]}</script>
 </head>
@@ -139,5 +145,20 @@
     <div class="closing"><p>Vous ne savez pas encore quelle technique ou quel article choisir ? Décrivez-nous simplement votre activité et la quantité envisagée ; nous vous guiderons vers la bonne solution.</p><a class="back" href="boutique.html">Retour à la boutique&nbsp; ←</a></div>
   </main>
   <footer><span>© MADE BY ALGERIANS · From algeria with creativity</span><span>Fabriqué en Algérie</span></footer>
+  <script>
+    (()=>{
+      if(matchMedia('(prefers-reduced-motion: reduce)').matches)return;
+      document.body.classList.add('motion-enabled');
+      requestAnimationFrame(()=>requestAnimationFrame(()=>document.body.classList.add('hero-ready')));
+      const progress=document.createElement('div');progress.className='pro-scroll-progress';progress.setAttribute('aria-hidden','true');document.body.appendChild(progress);
+      let ticking=false;const update=()=>{const available=document.documentElement.scrollHeight-innerHeight;progress.style.transform='scaleX('+(available>0?Math.min(1,Math.max(0,scrollY/available)):0)+')';ticking=false;};
+      addEventListener('scroll',()=>{if(!ticking){requestAnimationFrame(update);ticking=true;}},{passive:true});update();
+      const targets=[...document.querySelectorAll('.services,.media-section,.contact-title,.contact,.closing')];
+      document.querySelectorAll('.service-grid,.contacts').forEach(group=>[...group.children].forEach((node,index)=>node.style.setProperty('--reveal-order',String(index%4))));
+      targets.forEach(node=>node.classList.add('pro-reveal'));
+      if(!('IntersectionObserver' in window)){targets.forEach(node=>node.classList.add('is-visible'));return;}
+      const observer=new IntersectionObserver(entries=>entries.forEach(entry=>{if(entry.isIntersecting){entry.target.classList.add('is-visible');observer.unobserve(entry.target);}}),{rootMargin:'0px 0px -7%',threshold:.07});targets.forEach(node=>observer.observe(node));
+    })();
+  </script>
 </body>
 </html>

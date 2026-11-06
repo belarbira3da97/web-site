@@ -169,11 +169,43 @@
     return "<aside class='cart-drawer' id='cart-drawer' aria-label='Aperçu du panier' aria-hidden='true'><div class='cart-drawer-head'><div><span>Votre sélection</span><strong>"+cart.reduce((sum,item)=>sum+item.qty,0)+" article"+(cart.reduce((sum,item)=>sum+item.qty,0)>1?"s":"")+"</strong></div><button class='cart-drawer-close' type='button' aria-label='Fermer le panier'>×</button></div><div class='mini-cart-lines'>"+lines+"</div>"+(cart.length?"<div class='cart-drawer-footer'><div><span>Sous-total</span><strong>"+money(subtotal)+"</strong></div><p>Les frais de livraison sont calculés selon votre wilaya.</p><a class='btn btn-green' href='commande.html'>Voir le panier et commander&nbsp; →</a></div>":"")+"</aside><button class='cart-backdrop' type='button' tabindex='-1' aria-label='Fermer le panier'></button>";
   }
   function initMotion() {
-    if(matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-    const targets=document.querySelectorAll(".section-head,.feature-card,.collection-preview-card,.houmti-card,.audience-card,.step,.delivery-note");
-    if(!("IntersectionObserver" in window)){targets.forEach(node=>node.classList.add("is-visible"));return;}
+    document.querySelector(".scroll-progress")?.remove();
+    if(matchMedia("(prefers-reduced-motion: reduce)").matches){document.body.classList.add("motion-reduced");return;}
+    document.body.classList.remove("motion-reduced");
+    document.body.classList.add("motion-enabled");
+
+    const progress=document.createElement("div");
+    progress.className="scroll-progress";
+    progress.setAttribute("aria-hidden","true");
+    document.body.appendChild(progress);
+    let ticking=false;
+    const updateProgress=()=>{
+      const available=document.documentElement.scrollHeight-innerHeight;
+      const ratio=available>0?Math.min(1,Math.max(0,scrollY/available)):0;
+      progress.style.transform="scaleX("+ratio+")";
+      ticking=false;
+    };
+    addEventListener("scroll",()=>{if(!ticking){requestAnimationFrame(updateProgress);ticking=true;}},{passive:true});
+    updateProgress();
+
+    const hero=document.querySelector(".hero-brand");
+    if(hero){
+      hero.classList.add("hero-enter");
+      requestAnimationFrame(()=>requestAnimationFrame(()=>hero.classList.add("is-ready")));
+      if(matchMedia("(min-width: 761px)").matches){
+        let parallaxTicking=false;
+        const updateHero=()=>{const rect=hero.getBoundingClientRect();const ratio=Math.min(1,Math.max(0,-rect.top/Math.max(rect.height,1)));hero.style.setProperty("--hero-shift",(ratio*18).toFixed(1)+"px");parallaxTicking=false;};
+        addEventListener("scroll",()=>{if(!parallaxTicking){requestAnimationFrame(updateHero);parallaxTicking=true;}},{passive:true});
+        updateHero();
+      }
+    }
+
+    const targetSelector=".section-head,.section-head-split,.houmti-home-head,.collection-title-row,.collection-future,.promo-copy,.promo-visual,.origin-inner,.b2b-band-inner,.feature-card,.collection-preview-card,.houmti-card,.audience-card,.step,.delivery-note,.essential-image,.essential-copy,.casbah-story-copy,.casbah-story-facts";
+    const targets=[...document.querySelectorAll(targetSelector)];
+    document.querySelectorAll(".featured-grid,.houmti-home-grid,.steps,.delivery-notes,.collection-preview-grid").forEach(group=>[...group.children].forEach((node,index)=>node.style.setProperty("--reveal-order",String(index%4))));
     targets.forEach(node=>node.classList.add("reveal-ready"));
-    const observer=new IntersectionObserver(entries=>entries.forEach(entry=>{if(entry.isIntersecting){entry.target.classList.add("is-visible");observer.unobserve(entry.target);}}),{rootMargin:"0px 0px -8%",threshold:.08});
+    if(!("IntersectionObserver" in window)){targets.forEach(node=>node.classList.add("is-visible"));return;}
+    const observer=new IntersectionObserver(entries=>entries.forEach(entry=>{if(entry.isIntersecting){entry.target.classList.add("is-visible");observer.unobserve(entry.target);}}),{rootMargin:"0px 0px -7%",threshold:.07});
     targets.forEach(node=>observer.observe(node));
   }
   function initNavigation() {
