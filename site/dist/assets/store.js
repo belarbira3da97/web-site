@@ -1,7 +1,7 @@
 (() => {
   const A = "assets/";
   const products = {
-    regular:{key:"regular",name:"T-shirt regular imprimé",short:"T-shirt regular",price:2500,sizes:["S","M","L","XL","XXL"],colors:"15 coloris du catalogue",image:A+"amine-regular-black-v2.webp",weight:"180 g/m²",fabric:"100 % coton",fit:"Coupe classique unisexe · col côtelé",description:"Un t-shirt en coton à la coupe classique, pensé pour accompagner le quotidien. Son col côtelé et son design inspiré de l’Algérie composent une pièce facile à porter seule ou sous une veste.",care:"Lavage à 30 °C indiqué au catalogue. Suivez les consignes d’entretien liées au marquage imprimé."},
+    regular:{key:"regular",name:"T-shirt regular imprimé",short:"T-shirt regular",price:2500,sizes:["S","M","L","XL","XXL"],colors:"15 coloris du catalogue",image:A+"amine-regular-black-relaxed.webp",weight:"180 g/m²",fabric:"100 % coton",fit:"Coupe classique unisexe · col côtelé",description:"Un t-shirt en coton à la coupe classique, pensé pour accompagner le quotidien. Son col côtelé et son design inspiré de l’Algérie composent une pièce facile à porter seule ou sous une veste.",care:"Lavage à 30 °C indiqué au catalogue. Suivez les consignes d’entretien liées au marquage imprimé."},
     oversize:{key:"oversize",name:"T-shirt oversize HOUMTI",short:"T-shirt oversize Casbah",price:4000,sizes:["S","M","L","XL"],colors:"Beige et noir",image:A+"casbah-oversize-black-back-model.webp",weight:"250 g/m²",fabric:"100 % coton",fit:"Coupe ample et décontractée",description:"La collection HOUMTI met à l’honneur les quartiers emblématiques d’Alger sur un T-shirt oversize : signature rouge à l’avant, illustration au dos et coton épais de 250 g/m².",care:"Lavage à 30 °C indiqué au catalogue. Suivez les consignes d’entretien liées au marquage imprimé."},
     hoodie:{key:"hoodie",name:"Hoodie imprimé",short:"Hoodie",price:4500,sizes:["S","M","L","XL","XXL"],colors:"Noir, blanc et beige",image:A+"amine-hoodie-black.webp",weight:"350 g/m² · 3 fils",fabric:"100 % coton",fit:"Coupe unisexe · capuche ajustable à cordons",description:"Un hoodie en coton épais, conçu pour apporter confort et caractère aux journées fraîches. Sa construction 3 fils, sa capuche ajustable et son design inspiré de l’Algérie en font une pièce facile à intégrer à votre vestiaire.",care:"Lavage à 30 °C indiqué au catalogue. Suivez les consignes d’entretien liées au marquage imprimé."},
     tote:{key:"tote",name:"Totebag imprimé",short:"Totebag",price:2000,sizes:["Format unique"],colors:"Beige, noir, vert bouteille et bleu nuit",image:A+"imene-totebag-beige.webp",weight:"38 × 38 cm",fabric:"Toile canvas",fit:"Format pratique et réutilisable",description:"Un totebag en toile canvas au format 38 × 38 cm, pensé pour transporter vos essentiels au quotidien. Réutilisable et facile à emporter, il accueille un design inspiré de l’Algérie.",care:"Le catalogue conseille un lavage à la main ou en machine à basse température. Suivez les consignes d’entretien liées au marquage imprimé."},
@@ -89,7 +89,7 @@
   const imageDimensions = {
     "logo-header.png":[1366,292],"logo-white-on-black.png":[682,652],"amine-imene-neighborhood.webp":[1448,1086],
     "amine-hoodie-black.webp":[1122,1402],"amine-oversize-black.webp":[900,1600],"amine-polo-black-v2.webp":[788,1400],
-    "amine-polo-green-bottle.webp":[941,1672],"amine-polo-white-v1.webp":[941,1672],"amine-regular-black-v2.webp":[941,1672],
+    "amine-polo-green-bottle.webp":[941,1672],"amine-polo-white-v1.webp":[941,1672],"amine-regular-black-v2.webp":[941,1672],"amine-regular-black-relaxed.webp":[848,1038],
     "amine-regular-white.webp":[900,1600],"imene-hoodie-beige.webp":[1086,1448],"imene-oversize-beige.webp":[1086,1448],
     "imene-polo-beige.webp":[1050,1400],"imene-regular-black.webp":[1086,1448],"imene-totebag-beige.webp":[1086,1448],
     "tote-black.jpg":[310,405],"tote-green.jpg":[308,424]
@@ -243,7 +243,7 @@
   }
   function featureCard(key, badge, showPrice=true, ctaLabel="Voir le modèle") {
     const p=products[key], url=key==="polo"?"polo-pack.html":categories.find(c=>c.key===key).url;
-    const featuredImage={regular:A+"amine-regular-black-v2.webp",oversize:A+"imene-oversize-beige.webp",hoodie:A+"amine-hoodie-black.webp",tote:A+"imene-totebag-beige.webp"}[key]||p.image;
+    const featuredImage={regular:A+"amine-regular-black-relaxed.webp",oversize:A+"imene-oversize-beige.webp",hoodie:A+"amine-hoodie-black.webp",tote:A+"imene-totebag-beige.webp"}[key]||p.image;
     const summary=key==="regular"?"100 % coton · 180 g/m² · Coupe classique":key==="oversize"?"100 % coton · 250 g/m² · Coupe oversize":p.fabric+" · "+p.fit;
     const title=key==="oversize"?"T-shirt Oversize":p.short;
     const swatches={regular:["#171816","#f2efe8","#284d3c"],oversize:["#171816","#cbb99f"],hoodie:["#171816","#e6dfd2","#f1f0eb"],tote:["#171816","#d8c5a7","#164b34","#1c2b46"]}[key]||[];
@@ -301,7 +301,7 @@
     belcourt:{name:"T-shirt oversize Belcourt – Belouizdad",image:"belcourt-oversize-black-back-model.webp",route:"design.html?type=oversize&design=belcourt",collection:"HOUMTI",description:"Une ruelle en escalier, des jardins et un stade : Belcourt illustré au dos."}
   };
   const essentialShowcase={
-    regular:{kicker:"LA COUPE ESSENTIELLE",title:"Un classique, prêt à raconter votre histoire.",description:"Une coupe droite et confortable en coton 180 g/m². Le T-shirt regular offre une silhouette facile à porter, pensée pour accueillir les créations MADE BY ALGERIANS.",images:["amine-regular-black-v2.webp","amine-regular-white.webp","imene-regular-black.webp"],imageAlts:["T-shirt regular noir porté par Amine","T-shirt regular blanc porté par Amine","T-shirt regular noir porté par Imene"]},
+    regular:{kicker:"LA COUPE ESSENTIELLE",title:"Un classique, prêt à raconter votre histoire.",description:"Une coupe droite et confortable en coton 180 g/m². Le T-shirt regular offre une silhouette facile à porter, pensée pour accueillir les créations MADE BY ALGERIANS.",images:["amine-regular-black-relaxed.webp","amine-regular-white.webp","imene-regular-black.webp"],imageAlts:["T-shirt regular noir porté par Amine dans une pose décontractée","T-shirt regular blanc porté par Amine","T-shirt regular noir porté par Imene"]},
     hoodie:{kicker:"LE CONFORT DENSE",title:"Une pièce chaude, avec du caractère.",description:"Un hoodie 100 % coton de 350 g/m², construit pour garder une belle tenue et accompagner les journées fraîches. Sa coupe unisexe laisse toute la place au design.",images:["amine-hoodie-black.webp","imene-hoodie-beige.webp"],imageAlts:["Hoodie noir porté par Amine","Hoodie beige porté par Imene"]},
     tote:{kicker:"L’ACCESSOIRE DU QUOTIDIEN",title:"Votre univers, partout avec vous.",description:"Un totebag en toile canvas au format 38 × 38 cm, solide, réutilisable et facile à emporter. Un support simple pour prolonger l’univers de nos collections.",images:["imene-totebag-beige.webp","tote-black.jpg","tote-green.jpg"],imageAlts:["Totebag beige porté par Imene","Totebag noir MADE BY ALGERIANS","Totebag vert MADE BY ALGERIANS"]}
   };
