@@ -43,6 +43,12 @@
       "skillPath": "ecommerce-landing-page/SKILL.md",
       "computedHash": "ab0fe96d6afade5226c2e6c03fa39defc30941f0b54fef07b19649aa6c48a21e"
     },
+    "framer-motion-animator": {
+      "source": "patricio0312rev/skills",
+      "sourceType": "github",
+      "skillPath": "frontend/framer-motion-animator/SKILL.md",
+      "computedHash": "2f47c7af86096e9fe96c15d4e9e0b5e3462dcd549796402366e62343e4884c32"
+    },
     "grill-me": {
       "source": "mattpocock/skills",
       "sourceType": "github",
