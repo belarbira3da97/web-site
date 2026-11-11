@@ -1,119 +1,125 @@
 {
-  "version": 1,
+  "version": 2,
   "skills": {
     "agent-browser": {
       "source": "vercel-labs/agent-browser",
       "sourceType": "github",
       "skillPath": "skills/agent-browser/SKILL.md",
-      "computedHash": "60a9cbe5af176150582c019e16e5d3703a41bb02d88438e881349876120d7944"
+      "computedHash": "c3d8b82b1b229c3697cf5f21b5202375a7e6aea21c7059ab30f0bc6972664a98"
     },
     "ai-avatar-video": {
       "source": "qu-skills/superpowers",
       "sourceType": "github",
       "skillPath": "tools/video/ai-avatar-video/SKILL.md",
-      "computedHash": "fb79eb46607746eb3666903766873f2d2d2ef8c7c5371046b0b91d60b23da8cb"
+      "computedHash": "0769c92ae30ffedd75f944665763a2ceb9735716f3a5432e84bd23841b9d9767"
     },
     "ai-image-generation": {
       "source": "skills-shell/superpowers",
       "sourceType": "github",
       "skillPath": "tools/image/ai-image-generation/SKILL.md",
-      "computedHash": "82eca9e2eadda210d66433497ff9d31bc1c0ea2dfcd7f0be4710e9b4ef53addd"
+      "computedHash": "66662cff302bdc83a4ebdebb4835302eb78b85f4630562f77c94446c7fa4a966"
     },
     "ecommerce-competitor-analysis": {
       "source": "nexscope-ai/ecommerce-skills",
       "sourceType": "github",
       "skillPath": "ecommerce-competitor-analysis/SKILL.md",
-      "computedHash": "15c3f038bd2611a54dc562ce31fecc3ccac43ae8254891891e0d5b518d00885a"
+      "computedHash": "654c18e74091188dba371ff06e7d36b8a132ec3b8c68556a0e0e81607a5698d0"
     },
     "ecommerce-growth-strategy": {
       "source": "nexscope-ai/ecommerce-skills",
       "sourceType": "github",
       "skillPath": "ecommerce-growth-strategy/SKILL.md",
-      "computedHash": "f9a8b5f0af92a4da462dca573d7718512a911bb4ed33073fe8c3d05267ea0ce2"
+      "computedHash": "5ce50d713f6b97ccf6b565e561f1266e20a01251dbdc2a01bc44806d78d2cff8"
     },
     "ecommerce-image-workflow": {
       "source": "nexu-io/open-design",
       "sourceType": "github",
       "skillPath": "skills/ecommerce-image-workflow/SKILL.md",
-      "computedHash": "3501389eb4414183b9770ac8926497748fb9ffb966320ab1b5d5bfaf3862d02f"
+      "computedHash": "8ab4aa2627e9d1d781fe4ed2134f7197b40443197b2bcf7630bb310505a1df49"
     },
     "ecommerce-landing-page": {
       "source": "nexscope-ai/ecommerce-skills",
       "sourceType": "github",
       "skillPath": "ecommerce-landing-page/SKILL.md",
-      "computedHash": "3647e4875d6375c2f62f39c8392dbe52c63fb791312f25c3bb5ada10d4171a49"
+      "computedHash": "ab0fe96d6afade5226c2e6c03fa39defc30941f0b54fef07b19649aa6c48a21e"
     },
     "grill-me": {
       "source": "mattpocock/skills",
       "sourceType": "github",
       "skillPath": "skills/productivity/grill-me/SKILL.md",
-      "computedHash": "9cdbb4b8f7a3aeaef82e6230c9e823500d4a8a1214c726cf342cf9829d34fc7d"
+      "computedHash": "ab1acb9fbd9eaee03da254abb8a8de228d1e7a07475fe959da4a5eefa34ea4b9"
     },
     "grill-with-docs": {
       "source": "mattpocock/skills",
       "sourceType": "github",
       "skillPath": "skills/engineering/grill-with-docs/SKILL.md",
-      "computedHash": "35e62aa423aaeab6a414bcac273f56dfb17802ef2334b41b6a3b00f28196c8cf"
+      "computedHash": "02e258f41d210f9b2e7cce9faf62b3c59e8fcebe5d2736369c3cd07d471324f8"
     },
     "hyperframes-cli": {
       "source": "heygen-com/hyperframes",
       "sourceType": "github",
       "skillPath": "skills/hyperframes-cli/SKILL.md",
-      "computedHash": "db0619bebc1ed7f4d9f4d00219add41a04464fde2ad4a7d3eaf8528e98568c49"
+      "computedHash": "aaa5d2827250450a55265634a5e41d30a0ee90b2628648b01f2ae2a0fc43cc7c"
     },
     "improve-codebase-architecture": {
       "source": "mattpocock/skills",
       "sourceType": "github",
       "skillPath": "skills/engineering/improve-codebase-architecture/SKILL.md",
-      "computedHash": "f768cb44209e0d30e3449b8f95ea3dc8293093f73cfe02127d530db43412cf76"
+      "computedHash": "f0820b18426a7d9a6c823a890988ba0ac70bf0fd596d30d7ef07c88558728c23"
     },
     "media-use": {
       "source": "heygen-com/hyperframes",
       "sourceType": "github",
       "skillPath": "skills/media-use/SKILL.md",
-      "computedHash": "87023e34ceeff40e34f9a5e2dbb6738a4e522ac92a5436a786171b1bc82ad0e5"
+      "computedHash": "3819626a0b13f26ad584f86338093e152dddd44b5c82a2bbf5a5b860a818bb74"
     },
     "product-photography": {
       "source": "101-skills/superpowers",
       "sourceType": "github",
       "skillPath": "guides/photo/product-photography/SKILL.md",
-      "computedHash": "7553fa76097f15bebbeaa01e9db720c0437e0732412a6e739f6d16df21370700"
+      "computedHash": "49bfb37a0b5490d1d3cd9e031a31f69bfadecb0e7c638f5457ac39be5c766591"
     },
     "reddit-automation": {
       "source": "flowkit-labs/skills",
       "sourceType": "github",
       "skillPath": "reddit-automation/SKILL.md",
-      "computedHash": "b9541be8aa1d4b0fa2e91730bc93e810c02bfb639aa951ad9a1a7612e4666c02"
+      "computedHash": "ac8dfb0de0e86b9d6d34f20ba6c1f0eb58f8e7866829075b611229a847d4b28b"
     },
     "research": {
       "source": "mattpocock/skills",
       "sourceType": "github",
       "skillPath": "skills/engineering/research/SKILL.md",
-      "computedHash": "5d85b64ecceed6b3f6d5996dc8af07180be8d1ff11ef3d26eda2acff078fbd39"
+      "computedHash": "7662666af51f8b1672ed7d88360d4b82656da21bb7b11c49e956eeb3036b85d5"
     },
     "seo-audit": {
       "source": "coreyhaines31/marketingskills",
       "sourceType": "github",
       "skillPath": "skills/seo-audit/SKILL.md",
-      "computedHash": "9a94c66cb3098b03037f072b6f561cca75410c6d8611e50646baf9e8a5dabe8f"
+      "computedHash": "558ade4816b3d5ed50fc53330a497a2adc073768b8d3e55996e54d2aafc8de05"
     },
     "seo-ecommerce": {
       "source": "agricidaniel/claude-seo",
       "sourceType": "github",
       "skillPath": "skills/seo-ecommerce/SKILL.md",
-      "computedHash": "11d57b4e8ad7d2d18cff7660936c6fa981e0c7b187316440d93a5e1d650aefdb"
+      "computedHash": "479bbbd55e8ace7565bf9ee2bb3bb56721709355b8a6046d114b84cf9aa29293"
     },
     "skill-creator": {
       "source": "anthropics/skills",
       "sourceType": "github",
       "skillPath": "skills/skill-creator/SKILL.md",
-      "computedHash": "5ea13a6d9f0d4bb694405d79acd00cadec0d21bb138c4dd10fcf3c500cb835c2"
+      "computedHash": "2d7f889e6ae93c6c27d699856942c336b5b8644537496987d5571043d059b1dc"
+    },
+    "ui-ux-pro-max": {
+      "source": "nextlevelbuilder/ui-ux-pro-max-skill",
+      "sourceType": "github",
+      "skillPath": ".claude/skills/ui-ux-pro-max/SKILL.md",
+      "computedHash": "ff6863fc7c1be035b294703b2e7c90b2197548985ca4cb98f58740a7e84dc0cc"
     },
     "web-design-guidelines": {
       "source": "vercel-labs/agent-skills",
       "sourceType": "github",
       "skillPath": "skills/web-design-guidelines/SKILL.md",
-      "computedHash": "a6a44d5498f7e8f68289902f3dedfc6f38ae0cee1e96527c80724cf27f727c2a"
+      "computedHash": "4f68ae07187fb0d1fb78c88b503d089da4cf5a9d9625d1f2e425b1590bf96d92"
     }
   }
 }
