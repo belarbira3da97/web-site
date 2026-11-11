@@ -317,3 +317,10 @@ h1,h2,h3{text-wrap:balance}p,.notice{text-wrap:pretty}
   html{scroll-padding-top:110px;scroll-padding-bottom:calc(90px + env(safe-area-inset-bottom,0px))}
   a,button,input,select,textarea{scroll-margin-bottom:calc(100px + env(safe-area-inset-bottom,0px))}
 }
+
+.checkout-followup{margin-top:14px;padding:14px;display:grid;grid-template-columns:54px 1fr;gap:12px;align-items:center;background:#eef5f1;border:1px solid #c9ddd1;color:var(--ink)}
+.checkout-followup>span{width:54px;height:54px;border-radius:50%;display:grid;place-items:center;background:var(--green);color:#fff;font-size:13px;font-weight:800;letter-spacing:.06em}
+.checkout-followup strong{display:block;margin-bottom:3px;font-size:11px}
+.checkout-followup p{margin:0;color:#4d5d53;font-size:10px;line-height:1.65}
+.checkout-legal{margin:10px 0 0;color:var(--muted);font-size:9px;line-height:1.7}
+@media(max-width:420px){.checkout-followup{grid-template-columns:46px 1fr;padding:12px;gap:10px}.checkout-followup>span{width:46px;height:46px;font-size:11px}}
