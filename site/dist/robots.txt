@@ -1,6 +1,7 @@
 User-agent: *
-Allow: /
-Disallow: /commande.html
-Disallow: /confirmation.html
+Allow: /web-site/
+# Les pages de commande restent explorables pour lire leur meta noindex, follow.
+Allow: /web-site/commande.html
+Allow: /web-site/confirmation.html
 
 Sitemap: https://belarbira3da97.github.io/web-site/sitemap.xml

@@ -11,7 +11,7 @@
   <meta property="og:site_name" content="MADE BY ALGERIANS">
   <meta property="og:title" content="Professionnels — Contact MADE BY ALGERIANS">
   <meta property="og:description" content="Vêtements professionnels et personnalisation textile en Algérie : création graphique, impression, broderie et accompagnement sur mesure.">
-  <meta property="og:image" content="https://belarbira3da97.github.io/web-site/assets/offre-de-service-cover.png">
+  <meta property="og:image" content="https://belarbira3da97.github.io/web-site/assets/offre-de-service-cover.webp">
   <meta property="og:url" content="https://belarbira3da97.github.io/web-site/professionnels.html">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="Professionnels — Contact MADE BY ALGERIANS">
@@ -88,7 +88,13 @@
     .service-card,.media-card,.contact{transition:transform .35s cubic-bezier(.2,.75,.2,1),border-color .25s,box-shadow .35s ease}.service-card:hover,.media-card:hover,.contact:hover{transform:translateY(-6px);box-shadow:0 22px 45px rgba(0,0,0,.24)}
     .media-button,.back,.pro-cta{transition:transform .24s cubic-bezier(.2,.75,.2,1),box-shadow .24s,background-color .2s}.media-button:hover,.back:hover,.pro-cta:hover{transform:translateY(-3px);box-shadow:0 12px 26px rgba(0,0,0,.25)}.media-button:active,.back:active,.pro-cta:active{transform:scale(.985)}
     @media(prefers-reduced-motion:reduce){.pro-scroll-progress{display:none}.pro-reveal,.motion-enabled main>*{opacity:1!important;filter:none!important;transform:none!important;transition:none!important}}
-  </style>
+  h1,h2,h3{text-wrap:balance}p{text-wrap:pretty}.hero-actions .btn,.media-button,.doc-actions a{min-height:44px;font-size:12px}
+
+.mobile-tabbar{display:none;color:#171816}
+@media(max-width:760px){body{padding-bottom:calc(70px + env(safe-area-inset-bottom,0px))}.mobile-tabbar{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));position:fixed;z-index:90;left:0;right:0;bottom:0;background:rgba(247,245,239,.98);border-top:1px solid #d4d1c8;padding:6px 10px calc(6px + env(safe-area-inset-bottom,0px));box-shadow:0 -4px 18px #1111110d}.mobile-tabbar>a{display:flex;min-height:52px;min-width:44px;flex-direction:column;align-items:center;justify-content:center;font-size:12px;line-height:1.3;gap:2px;border-radius:6px}.mobile-tabbar>a>span{font:22px/1 Arial,sans-serif}.mobile-tabbar b{font-size:12px;background:var(--red);color:#fff;border-radius:20px;min-width:16px;display:inline-block;text-align:center;vertical-align:top}.top .pro-cta,.hero-actions a,.doc-actions a,.media-button{min-height:44px;font-size:12px}}
+.mobile-tabbar svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}.mobile-tabbar>a>span{display:flex;align-items:center;gap:3px}
+.pdf-actions .media-button{min-height:44px;min-width:44px;font-size:12px}
+</style>
   <script type="application/ld+json">{"@context":"https://schema.org","@type":"Organization","name":"MADE BY ALGERIANS","url":"https://belarbira3da97.github.io/web-site/","logo":"https://belarbira3da97.github.io/web-site/assets/logo-mark.png","email":"madebyalgerians@gmail.com","telephone":"+213792323644","sameAs":["https://www.instagram.com/madebyalgerians/","https://www.facebook.com/profile.php?id=61565057977805"]}</script>
 </head>
 <body>
@@ -119,13 +125,13 @@
           <a class="media-button" href="https://drive.google.com/file/d/1kCn5i4obS8g9InxPiKtqkKXmP_BuM5Xa/view" target="_blank" rel="noreferrer">Ouvrir la vidéo sur Google Drive →</a>
         </article>
         <article class="media-card doc-card offer-card">
-          <img class="doc-cover" src="assets/offre-de-service-cover.png" alt="Couverture de l’offre de service MADE BY ALGERIANS" width="992" height="3525" loading="lazy" decoding="async">
+          <img class="doc-cover" src="assets/offre-de-service-cover.webp" alt="Couverture de l’offre de service MADE BY ALGERIANS" width="992" height="3525" loading="lazy" decoding="async">
           <div class="doc-copy"><span class="section-kicker">2 PAGES · PDF</span><h3>Notre offre de service</h3><p>Création graphique, impression textile, broderie et finitions : découvrez notre accompagnement du brief à la livraison.</p>
             <div class="pdf-actions"><a class="media-button" href="assets/offre-de-service-made-by-algerians.pdf" target="_blank" rel="noreferrer">Consulter l’offre de service →</a><a class="media-button" href="assets/offre-de-service-made-by-algerians.pdf" download>Télécharger le PDF ↓</a></div>
           </div>
         </article>
         <article class="media-card doc-card catalogue-card">
-          <img class="doc-cover" src="assets/catalogue-cover.png" alt="Couverture du catalogue MADE BY ALGERIANS — Produits et services" width="621" height="877" loading="lazy" decoding="async">
+          <img class="doc-cover" src="assets/catalogue-cover.webp" alt="Couverture du catalogue MADE BY ALGERIANS — Produits et services" width="621" height="877" loading="lazy" decoding="async">
           <div class="doc-copy"><span class="section-kicker">34 PAGES · PDF</span><h3>Le catalogue produits &amp; services</h3><p>Parcourez nos vêtements, accessoires et options de personnalisation pour votre entreprise.</p>
             <div class="pdf-actions"><a class="media-button" href="assets/catalogue-made-by-algerians.pdf" target="_blank" rel="noreferrer">Consulter le catalogue →</a><a class="media-button" href="assets/catalogue-made-by-algerians.pdf" download>Télécharger le PDF ↓</a></div>
           </div>
@@ -160,5 +166,7 @@
       const observer=new IntersectionObserver(entries=>entries.forEach(entry=>{if(entry.isIntersecting){entry.target.classList.add('is-visible');observer.unobserve(entry.target);}}),{rootMargin:'0px 0px -7%',threshold:.07});targets.forEach(node=>observer.observe(node));
     })();
   </script>
+<nav class="mobile-tabbar" aria-label="Navigation mobile"><a href="index.html"><span aria-hidden="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m3 10 9-7 9 7v10H3zM9 20v-7h6v7"/></svg></span>Accueil</a><a href="index.html#collections"><span aria-hidden="true"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg></span>Collections</a><a href="https://wa.me/213792323644" target="_blank" rel="noreferrer"><span aria-hidden="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 11.5a9 9 0 0 1-13.5 7.8L3 21l1.7-4.5A9 9 0 1 1 21 11.5Z"/><path d="M8 7c0 4 2 6 6 7l2-2-3-2-1 1-2-2 1-1-2-3Z"/></svg></span>WhatsApp</a><a href="commande.html" id="mobile-cart-link"><span aria-hidden="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16l-1 14H5zM8 7V5a4 4 0 0 1 8 0v2"/></svg> <b id="mobile-cart-count">0</b></span>Panier</a></nav>
+<script>(()=>{let count=0;try{const cart=JSON.parse(localStorage.getItem('mba-shop-cart-v2')||'[]');if(Array.isArray(cart))count=cart.filter(item=>item&&typeof item.id==='string'&&item.id.trim()&&typeof item.name==='string'&&item.name.trim()&&Number.isFinite(item.price)&&item.price>0&&Number.isInteger(item.qty)&&item.qty>0&&item.qty<=99).reduce((sum,item)=>sum+item.qty,0);}catch(_){}document.getElementById('mobile-cart-count').textContent=String(count);document.getElementById('mobile-cart-link').setAttribute('aria-label','Voir le panier, '+count+' article'+(count>1?'s':''));})();</script>
 </body>
 </html>

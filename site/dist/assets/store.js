@@ -64,7 +64,16 @@
   const model = products[type] || products.regular;
   const cartKey = "mba-shop-cart-v2";
   let cart = [];
-  try { cart = JSON.parse(localStorage.getItem(cartKey) || "[]"); } catch (_) { cart=[]; }
+  function normalizeCart(value) {
+    if(!Array.isArray(value)) return [];
+    return value.filter(item=>item && typeof item==="object" && typeof item.id==="string" && item.id.trim() && typeof item.name==="string" && item.name.trim() && typeof item.price==="number" && Number.isFinite(item.price) && item.price>0 && typeof item.qty==="number" && Number.isInteger(item.qty) && item.qty>0 && item.qty<=99).map(item=>({
+      id:item.id, name:item.name, price:item.price, qty:item.qty,
+      details:typeof item.details==="string"?item.details:"",
+      image:typeof item.image==="string" && /^assets\/[a-zA-Z0-9_.-]+$/.test(item.image)?item.image:"",
+      deliveryFree:item.deliveryFree===true
+    }));
+  }
+  try { cart = normalizeCart(JSON.parse(localStorage.getItem(cartKey) || "[]")); } catch (_) { cart=[]; }
   const SITE_URL = "https://belarbira3da97.github.io/web-site/";
   const defaultShareImage = "assets/amine-imene-neighborhood.webp";
   const seoByFile = {
@@ -102,7 +111,18 @@
   function absoluteUrl(path) { return new URL(path,SITE_URL).href; }
   function currentFile() { return location.pathname.split("/").pop()||"index.html"; }
   function enhanceSeo() {
-    const file=currentFile(), query=new URLSearchParams(location.search), design=query.get("design"), product=productSeo[design];
+    const file=currentFile(), query=new URLSearchParams(location.search), design=query.get("design"), product=query.get("type")==="oversize"&&Object.hasOwn(productSeo,design)?productSeo[design]:null;
+    const identity=new URLSearchParams();
+    if(file==="design.html") {
+      const key=query.get("type");
+      if(categories.some(item=>item.key===key)) {
+        identity.set("type",key);
+        if(key==="oversize"&&product) identity.set("design",design);
+        else if(query.has("collection")&&Object.hasOwn(productCollections,query.get("collection"))) identity.set("collection",query.get("collection"));
+        else if(/^\d{2}$/.test(design||"")) identity.set("design",design);
+      }
+    }
+    const canonicalUrl=absoluteUrl(file==="index.html"?"":file+(identity.size?"?"+identity.toString():""));
     const config=product?{title:product.name+" | MADE BY ALGERIANS",description:product.description,image:product.image,product}:seoByFile[file]||{};
     if(file==="design.html"&&!product) config.noindex=true;
     if(config.title) document.title=config.title;
@@ -114,13 +134,13 @@
     upsertMeta('meta[property="og:title"]',{property:"og:title",content:document.title});
     upsertMeta('meta[property="og:description"]',{property:"og:description",content:description});
     upsertMeta('meta[property="og:image"]',{property:"og:image",content:absoluteUrl(config.image||defaultShareImage)});
-    upsertMeta('meta[property="og:url"]',{property:"og:url",content:absoluteUrl(file==="index.html"?"":file+location.search)});
+    upsertMeta('meta[property="og:url"]',{property:"og:url",content:canonicalUrl});
     upsertMeta('meta[name="twitter:card"]',{name:"twitter:card",content:"summary_large_image"});
     upsertMeta('meta[name="twitter:title"]',{name:"twitter:title",content:document.title});
     upsertMeta('meta[name="twitter:description"]',{name:"twitter:description",content:description});
     let canonical=document.head.querySelector('link[rel="canonical"]');
     if(!canonical){canonical=document.createElement("link");canonical.rel="canonical";document.head.appendChild(canonical);}
-    canonical.href=absoluteUrl(file==="index.html"?"":file+(product?location.search:""));
+    canonical.href=canonicalUrl;
     document.querySelectorAll('script[data-mba-schema]').forEach(node=>node.remove());
     const schemas=[
       {"@context":"https://schema.org","@type":"Organization",name:"MADE BY ALGERIANS",url:SITE_URL,logo:absoluteUrl("assets/logo-mark.png"),email:"madebyalgerians@gmail.com",telephone:"+213792323644",sameAs:["https://www.instagram.com/madebyalgerians/","https://www.facebook.com/profile.php?id=61565057977805"]},
@@ -136,6 +156,19 @@
       })).filter(item=>item.name&&item.acceptedAnswer.text);
       if(questions.length) schemas.push({"@context":"https://schema.org","@type":"FAQPage",mainEntity:questions});
     }
+    const breadcrumb=document.querySelector(".breadcrumbs");
+    if(breadcrumb) {
+      const nav=document.createElement("nav");nav.className="breadcrumbs";nav.setAttribute("aria-label","Fil d’Ariane");
+      const list=document.createElement("ol"), entries=[];
+      [...breadcrumb.childNodes].forEach(node=>{
+        if(node.nodeType===Node.ELEMENT_NODE&&node.matches("a")) entries.push({name:node.textContent.trim(),href:node.getAttribute("href")});
+        else if(node.nodeType===Node.TEXT_NODE) node.textContent.split(" / ").map(text=>text.replace(/^\s*\/\s*|\s*\/\s*$/g,"").trim()).filter(Boolean).forEach(name=>entries.push({name}));
+      });
+      entries.forEach((entry,index)=>{const li=document.createElement("li");if(entry.href){const a=document.createElement("a");a.href=entry.href;a.textContent=entry.name;li.appendChild(a);}else{li.textContent=entry.name;li.setAttribute("aria-current","page");}list.appendChild(li);});
+      nav.appendChild(list);breadcrumb.replaceWith(nav);
+      schemas.push({"@context":"https://schema.org","@type":"BreadcrumbList",itemListElement:entries.map((entry,index)=>({"@type":"ListItem",position:index+1,name:entry.name,item:entry.href?absoluteUrl(entry.href):canonicalUrl}))});
+    }
+    document.querySelectorAll("nav a,.logo").forEach(link=>{const url=new URL(link.href);if(url.origin===location.origin&&(url.pathname.split("/").pop()||"index.html")===currentFile()&&!url.hash)link.setAttribute("aria-current","page");});
     schemas.forEach(data=>{const script=document.createElement("script");script.type="application/ld+json";script.dataset.mbaSchema="";script.textContent=JSON.stringify(data);document.head.appendChild(script);});
   }
   function dimensionsFor(image) {
@@ -146,27 +179,23 @@
     return null;
   }
   function enhanceInterface() {
+    const critical=document.querySelector(".hero-photo img,.casbah-gallery-stage img,.category-photo img,.essential-image img,.feature-img img");
     document.querySelectorAll("img").forEach(image=>{
       const dimensions=dimensionsFor(image);
       if(dimensions&&!image.hasAttribute("width")){image.width=dimensions[0];image.height=dimensions[1];}
       image.decoding="async";
-      if(image.closest(".hero-photo,.casbah-gallery-stage,.category-photo")){image.loading="eager";image.fetchPriority="high";}
-      else image.loading="lazy";
+      if(image===critical){image.loading="eager";image.fetchPriority="high";}
+      else {image.loading=image.closest(".logo")?"eager":"lazy";image.fetchPriority="auto";}
     });
     const autocomplete={"client-name":"name","client-phone":"tel","client-wilaya":"address-level1","client-city":"address-level2","client-address":"street-address","client-note":"off"};
     document.querySelectorAll("input,select,textarea").forEach(control=>{if(!control.name&&control.id)control.name=control.id;if(!control.autocomplete)control.autocomplete=autocomplete[control.id]||"off";});
-    document.querySelectorAll('.casbah-config select[id$="-size"],.polo-config #polo-size').forEach(select=>{
-      if(select.nextElementSibling?.classList.contains("size-choice-group")) return;
-      select.classList.add("size-select-native");
-      const group=document.createElement("div");group.className="size-choice-group";group.setAttribute("role","group");group.setAttribute("aria-label","Choisir une taille");
-      [...select.options].filter(option=>option.value).forEach(option=>{const button=document.createElement("button");button.type="button";button.textContent=option.value;button.dataset.size=option.value;button.addEventListener("click",()=>{select.value=option.value;group.querySelectorAll("button").forEach(item=>{const active=item===button;item.classList.toggle("active",active);item.setAttribute("aria-pressed",String(active));});select.dispatchEvent(new Event("change",{bubbles:true}));});group.appendChild(button);});
-      select.insertAdjacentElement("afterend",group);
-    });
+    // Native size controls stay visible and provide a single source of selection state.
   }
+
   function cartDrawerMarkup() {
     const subtotal=cart.reduce((sum,item)=>sum+item.price*item.qty,0);
-    const lines=cart.length?cart.slice(0,4).map(item=>"<article class='mini-cart-line'>"+(item.image?"<img src='"+esc(item.image)+"' alt=''>":"<span class='mini-cart-placeholder'>MBA</span>")+"<div><strong>"+esc(item.name)+"</strong><small>"+item.qty+" × "+money(item.price)+"</small><span>"+esc(item.details||"")+"</span></div></article>").join(""):"<div class='mini-cart-empty'><strong>Votre sélection est vide.</strong><p>Explorez nos produits et découvrez la collection HOUMTI.</p><a class='btn' href='boutique.html'>Voir la boutique&nbsp; →</a></div>";
-    return "<aside class='cart-drawer' id='cart-drawer' aria-label='Aperçu du panier' aria-hidden='true'><div class='cart-drawer-head'><div><span>Votre sélection</span><strong>"+cart.reduce((sum,item)=>sum+item.qty,0)+" article"+(cart.reduce((sum,item)=>sum+item.qty,0)>1?"s":"")+"</strong></div><button class='cart-drawer-close' type='button' aria-label='Fermer le panier'>×</button></div><div class='mini-cart-lines'>"+lines+"</div>"+(cart.length?"<div class='cart-drawer-footer'><div><span>Sous-total</span><strong>"+money(subtotal)+"</strong></div><p>Les frais de livraison sont calculés selon votre wilaya.</p><a class='btn btn-green' href='commande.html'>Voir le panier et commander&nbsp; →</a></div>":"")+"</aside><button class='cart-backdrop' type='button' tabindex='-1' aria-label='Fermer le panier'></button>";
+    const lines=cart.length?cart.map(item=>"<article class='mini-cart-line'>"+(item.image?"<img src='"+esc(item.image)+"' alt=''>":"<span class='mini-cart-placeholder'>MBA</span>")+"<div><strong>"+esc(item.name)+"</strong><small>"+item.qty+" × "+money(item.price)+"</small><span>"+esc(item.details||"")+"</span></div></article>").join(""):"<div class='mini-cart-empty'><strong>Votre sélection est vide.</strong><p>Explorez nos produits et découvrez la collection HOUMTI.</p><a class='btn' href='boutique.html'>Voir la boutique&nbsp; →</a></div>";
+    return "<aside class='cart-drawer' id='cart-drawer' role='dialog' aria-modal='true' aria-label='Aperçu du panier' aria-hidden='true' inert><div class='cart-drawer-head'><div><span>Votre sélection</span><strong>"+cart.reduce((sum,item)=>sum+item.qty,0)+" article"+(cart.reduce((sum,item)=>sum+item.qty,0)>1?"s":"")+"</strong></div><button class='cart-drawer-close' type='button' aria-label='Fermer le panier'>×</button></div><div class='mini-cart-lines'>"+lines+"</div>"+(cart.length?"<div class='cart-drawer-footer'><div><span>Sous-total</span><strong>"+money(subtotal)+"</strong></div><p>Les frais de livraison sont calculés selon votre wilaya.</p><a class='btn btn-green' href='commande.html'>Voir le panier et commander&nbsp; →</a></div>":"")+"</aside><button class='cart-backdrop' type='button' tabindex='-1' aria-label='Fermer le panier'></button>";
   }
   function initMotion() {
     document.querySelector(".scroll-progress")?.remove();
@@ -209,45 +238,78 @@
     targets.forEach(node=>observer.observe(node));
   }
   function initNavigation() {
-    const header=document.querySelector(".site-header"), opener=document.querySelector(".mobile-menu"), closer=document.querySelector(".mobile-nav-close"), backdrop=document.querySelector(".nav-backdrop"), cartTrigger=document.querySelector(".cart-link"), drawer=document.querySelector(".cart-drawer"), drawerClose=document.querySelector(".cart-drawer-close"), cartBackdrop=document.querySelector(".cart-backdrop");
+    const header=document.querySelector(".site-header"), opener=document.querySelector(".mobile-menu"), nav=document.querySelector(".site-nav"), drawer=document.querySelector(".cart-drawer");
     if(!header||!opener) return;
-    const setCartOpen=open=>{document.body.classList.toggle("cart-open",open);drawer?.setAttribute("aria-hidden",String(!open));cartTrigger?.setAttribute("aria-expanded",String(open));if(open){setOpen(false);drawerClose?.focus();}};
-    const setOpen=open=>{
-      if(open)setCartOpen(false);
-      header.classList.toggle("nav-open",open);
-      opener.setAttribute("aria-expanded",String(open));
-      document.body.classList.toggle("mobile-nav-open",open);
-      if(open) closer?.focus();
+    const mobile=matchMedia("(max-width:760px)");
+    let panel=null, trigger=null;
+    const background=[...document.querySelectorAll("#app,#site-footer,.topline,.head-main,.mobile-tabbar,.skip-link")];
+    const sync=()=>{
+      const menuOpen=panel===nav, cartOpen=panel===drawer;
+      header.classList.toggle("nav-open",menuOpen);
+      document.body.classList.toggle("mobile-nav-open",menuOpen);
+      document.body.classList.toggle("cart-open",cartOpen);
+      opener.setAttribute("aria-expanded",String(menuOpen));
+      document.querySelectorAll("[data-cart-trigger],.cart-link").forEach(link=>link.setAttribute("aria-expanded",String(cartOpen)));
+      nav.inert=cartOpen||(mobile.matches&&!menuOpen);
+      if(mobile.matches) nav.setAttribute("aria-hidden",String(!menuOpen));else nav.removeAttribute("aria-hidden");
+      if(menuOpen){nav.setAttribute("role","dialog");nav.setAttribute("aria-modal","true");}else {nav.removeAttribute("role");nav.removeAttribute("aria-modal");}
+      drawer.inert=!cartOpen;drawer.setAttribute("aria-hidden",String(!cartOpen));
+      background.forEach(node=>node.inert=!!panel);
     };
-    opener.addEventListener("click",()=>setOpen(!header.classList.contains("nav-open")));
-    closer?.addEventListener("click",()=>setOpen(false));
-    backdrop?.addEventListener("click",()=>setOpen(false));
-    cartTrigger?.addEventListener("click",event=>{event.preventDefault();setCartOpen(!document.body.classList.contains("cart-open"));});
-    drawerClose?.addEventListener("click",()=>setCartOpen(false));
-    cartBackdrop?.addEventListener("click",()=>setCartOpen(false));
-    document.querySelectorAll(".site-nav a").forEach(link=>link.addEventListener("click",()=>setOpen(false)));
-    document.addEventListener("keydown",event=>{if(event.key!=="Escape")return;if(header.classList.contains("nav-open")){setOpen(false);opener.focus();}else if(document.body.classList.contains("cart-open")){setCartOpen(false);cartTrigger?.focus();}});
+    const close=(restore=true)=>{const previous=trigger;panel=null;sync();if(restore)previous?.focus();};
+    const open=(target,source)=>{if(panel===target){close();return;}panel=target;trigger=source;sync();target.querySelector("button,a[href],select,input")?.focus();};
+    opener.addEventListener("click",()=>open(nav,opener));
+    document.addEventListener("click",event=>{
+      const cartLink=event.target.closest(".cart-link,[data-cart-trigger]");
+      if(cartLink){event.preventDefault();open(drawer,cartLink);return;}
+      if(event.target.closest(".mobile-nav-close,.nav-backdrop,.cart-drawer-close,.cart-backdrop"))close();
+      else if(event.target.closest(".site-nav a")&&panel===nav)close();
+    });
+    document.addEventListener("keydown",event=>{
+      if(!panel)return;
+      if(event.key==="Escape"){event.preventDefault();close();return;}
+      if(event.key!=="Tab")return;
+      const focusable=[...panel.querySelectorAll("a[href],button:not([disabled]),input:not([disabled]),select:not([disabled]),textarea:not([disabled]),[tabindex='0']")].filter(node=>node.getClientRects().length);
+      const first=focusable[0],last=focusable.at(-1);
+      if(event.shiftKey&&(document.activeElement===first||!panel.contains(document.activeElement))){event.preventDefault();last?.focus();}
+      else if(!event.shiftKey&&(document.activeElement===last||!panel.contains(document.activeElement))){event.preventDefault();first?.focus();}
+    });
+    mobile.addEventListener("change",()=>{if(panel===nav)close();else sync();});
+    sync();
+  }
+  function mobileNavigation() {
+    return "<nav class='mobile-tabbar' aria-label='Navigation mobile'><a href='index.html'><span aria-hidden='true'><svg viewBox='0 0 24 24' aria-hidden='true'><path d='m3 10 9-7 9 7v10H3zM9 20v-7h6v7'/></svg></span>Accueil</a><a href='index.html#collections'><span aria-hidden='true'><svg viewBox='0 0 24 24' aria-hidden='true'><rect x='3' y='3' width='7' height='7' rx='1'/><rect x='14' y='3' width='7' height='7' rx='1'/><rect x='3' y='14' width='7' height='7' rx='1'/><rect x='14' y='14' width='7' height='7' rx='1'/></svg></span>Collections</a><a href='https://wa.me/213792323644' target='_blank' rel='noreferrer'><span aria-hidden='true'><svg viewBox='0 0 24 24' aria-hidden='true'><path d='M21 11.5a9 9 0 0 1-13.5 7.8L3 21l1.7-4.5A9 9 0 1 1 21 11.5Z'/><path d='M8 7c0 4 2 6 6 7l2-2-3-2-1 1-2-2 1-1-2-3Z'/></svg></span>WhatsApp</a><a href='commande.html' data-cart-trigger aria-controls='cart-drawer' aria-expanded='false'><span aria-hidden='true'><svg viewBox='0 0 24 24' aria-hidden='true'><path d='M4 7h16l-1 14H5zM8 7V5a4 4 0 0 1 8 0v2'/></svg> <b class='cart-count-inline'>0</b></span>Panier</a></nav>";
+  }
+  function refreshCartPreview() {
+    const count=cart.reduce((sum,item)=>sum+item.qty,0);
+    document.querySelectorAll(".cart-count,.cart-count-inline").forEach(node=>node.textContent=String(count));
+    document.querySelectorAll(".cart-link,[data-cart-trigger]").forEach(node=>node.setAttribute("aria-label","Voir le panier, "+count+" article"+(count>1?"s":"")));
+    const drawer=document.querySelector(".cart-drawer");
+    if(drawer){const template=document.createElement("template");template.innerHTML=cartDrawerMarkup();drawer.innerHTML=template.content.querySelector(".cart-drawer").innerHTML;}
+    enhanceInterface();
   }
   function header(active) {
     const count=cart.reduce((n,x)=>n+x.qty,0);
     return "<a class='skip-link' href='#app'>Aller au contenu principal</a><div class='topline'><span>Livraison dans les 58 wilayas · Paiement à la réception</span><a href='polo-pack.html'>Pack 3 polos · livraison offerte&nbsp; →</a></div>"+
-      "<header class='site-header'><div class='head-main'><button class='mobile-menu' type='button' aria-label='Ouvrir le menu' aria-controls='site-nav' aria-expanded='false'><span></span><span></span></button><a class='logo' href='index.html' aria-label='Accueil MADE BY ALGERIANS'><img src='assets/logo-header.png' alt='MADE BY ALGERIANS — From Algeria, With Creativity'></a><div class='head-tools'><a class='head-help' href='aide.html'>Besoin d’aide&nbsp;?</a><a class='cart-link' href='commande.html' aria-label='Voir le panier, "+count+" article"+(count>1?"s":"")+"' aria-controls='cart-drawer' aria-expanded='false'><svg viewBox='0 0 24 24' aria-hidden='true'><path d='M3 4h2l2.2 11.2a2 2 0 0 0 2 1.6h8.9a2 2 0 0 0 1.9-1.4L22 8H6M9 20h.01M18 20h.01'/></svg><span class='cart-count'>"+count+"</span></a></div></div><nav id='site-nav' class='site-nav' aria-label='Navigation principale'><div class='mobile-nav-head'><span>Explorer</span><button class='mobile-nav-close' type='button' aria-label='Fermer le menu'>×</button></div>"+
+      "<header class='site-header'><div class='head-main'><button class='mobile-menu' type='button' aria-label='Ouvrir le menu' aria-controls='site-nav' aria-expanded='false'><span></span><span></span></button><a class='logo' href='index.html' aria-label='Accueil MADE BY ALGERIANS'><img loading='eager' width='1366' height='292' src='assets/logo-header.png' alt='MADE BY ALGERIANS — From Algeria, With Creativity'></a><div class='head-tools'><a class='head-help' href='aide.html'>Besoin d’aide&nbsp;?</a><a class='cart-link' href='commande.html' aria-label='Voir le panier, "+count+" article"+(count>1?"s":"")+"' aria-controls='cart-drawer' aria-expanded='false'><svg viewBox='0 0 24 24' aria-hidden='true'><path d='M3 4h2l2.2 11.2a2 2 0 0 0 2 1.6h8.9a2 2 0 0 0 1.9-1.4L22 8H6M9 20h.01M18 20h.01'/></svg><span class='cart-count'>"+count+"</span></a></div></div><nav id='site-nav' class='site-nav' aria-label='Navigation principale'><div class='mobile-nav-head'><span>Explorer</span><button class='mobile-nav-close' type='button' aria-label='Fermer le menu'>×</button></div>"+
       "<a class='"+(active==="shop"?"active":"")+"' href='boutique.html'>Boutique particuliers</a><a class='nav-collection' href='index.html#collections'>Nos collections</a><a class='"+(active==="delivery"?"active":"")+"' href='livraison.html'>Livraison</a><a class='"+(active==="help"?"active":"")+"' href='aide.html'>Aide &amp; tailles</a><a class='nav-pro' href='professionnels.html'>Espace professionnels</a><div class='mobile-nav-footer'><strong>MADE BY ALGERIANS</strong><span>From Algeria, with creativity</span><a href='https://wa.me/213792323644' target='_blank' rel='noreferrer'>Nous écrire sur WhatsApp&nbsp; →</a></div></nav><button class='nav-backdrop' type='button' tabindex='-1' aria-label='Fermer le menu'></button>"+cartDrawerMarkup()+"</header>";
   }
   function footer() {
-    return "<footer class='site-footer'><div class='footer-main'><a href='index.html'><img class='footer-logo' src='assets/logo-white-on-black.png' alt='MADE BY ALGERIANS'></a><nav class='footer-links'><a href='boutique.html'>Boutique</a><a href='tshirt-regular.html'>Regular</a><a href='tshirt-oversize.html'>Oversize</a><a href='hoodie.html'>Hoodies</a><a href='totebag.html'>Totebags</a><a href='polo-pack.html'>Pack polos</a><a href='livraison.html'>Tarifs livraison</a><a href='aide.html'>Aide &amp; retours</a><a href='professionnels.html'>Professionnels</a></nav><div class='footer-contact'>Une question ?<br><a href='https://wa.me/213792323644' target='_blank' rel='noreferrer'>Écrivez-nous sur WhatsApp →</a><br>+213 792 323 644</div></div><div class='footer-bottom'><span>© MADE BY ALGERIANS · From Algeria, with creativity</span><span>Paiement à la livraison · Créé en Algérie</span></div></footer><div class='toast' id='toast' role='status' aria-live='polite'></div>";
+    return "<footer class='site-footer'><div class='footer-main'><a href='index.html'><img class='footer-logo' src='assets/logo-white-on-black.png' alt='MADE BY ALGERIANS'></a><nav class='footer-links'><a href='boutique.html'>Boutique</a><a href='tshirt-regular.html'>Regular</a><a href='tshirt-oversize.html'>Oversize</a><a href='hoodie.html'>Hoodies</a><a href='totebag.html'>Totebags</a><a href='polo-pack.html'>Pack polos</a><a href='livraison.html'>Tarifs livraison</a><a href='aide.html'>Aide &amp; retours</a><a href='professionnels.html'>Professionnels</a></nav><div class='footer-contact'>Une question ?<br><a href='https://wa.me/213792323644' target='_blank' rel='noreferrer'>Écrivez-nous sur WhatsApp →</a><br>+213 792 323 644</div></div><div class='footer-bottom'><span>© MADE BY ALGERIANS · From Algeria, with creativity</span><span>Paiement à la livraison · Créé en Algérie</span></div></footer><div class='toast' id='toast' role='status' aria-live='polite' aria-atomic='true'></div>";
   }
-  function frame(active, body) { document.body.classList.toggle("home-page",active==="home"); document.getElementById("site-header").innerHTML=header(active); all.innerHTML=body; document.getElementById("site-footer").innerHTML=footer(); enhanceSeo(); enhanceInterface(); initNavigation(); initMotion(); }
+  function frame(active, body) { document.body.classList.toggle("home-page",active==="home"); document.getElementById("site-header").innerHTML=header(active); all.innerHTML=body; document.getElementById("site-footer").innerHTML=footer()+mobileNavigation(); refreshCartPreview(); enhanceSeo(); enhanceInterface(); initNavigation(); initMotion(); }
   function linkCard(c) {
     return "<a class='category-link' href='"+c.url+"'><b>"+c.title+"</b><span>Découvrir la page →</span></a>";
   }
   function featureCard(key, badge, showPrice=true, ctaLabel="Voir le modèle") {
+    const coming=["regular","hoodie","tote"].includes(key);
+    ctaLabel=coming?"Découvrir la coupe":"Choisir un modèle HOUMTI";
     const p=products[key], url=key==="polo"?"polo-pack.html":categories.find(c=>c.key===key).url;
     const featuredImage={regular:A+"amine-regular-black-relaxed.webp",oversize:A+"imene-oversize-beige.webp",hoodie:A+"amine-hoodie-black.webp",tote:A+"imene-totebag-beige.webp"}[key]||p.image;
     const summary=key==="regular"?"100 % coton · 180 g/m² · Coupe classique":key==="oversize"?"100 % coton · 250 g/m² · Coupe oversize":p.fabric+" · "+p.fit;
     const title=key==="oversize"?"T-shirt Oversize":p.short;
     const swatches={regular:["#171816","#f2efe8","#284d3c"],oversize:["#171816","#cbb99f"],hoodie:["#171816","#e6dfd2","#f1f0eb"],tote:["#171816","#d8c5a7","#164b34","#1c2b46"]}[key]||[];
-    return "<article class='feature-card'><a href='"+url+"' class='feature-img'><img src='"+featuredImage+"' alt='Photo du "+esc(p.short.toLowerCase())+" vierge, sans impression, MADE BY ALGERIANS'><span class='feature-tag'>"+badge+"</span><span class='feature-arrow' aria-hidden='true'>→</span></a><div class='feature-copy'><div class='feature-title-row'><h3>"+title+"</h3>"+(showPrice?"<strong>"+money(p.price)+"</strong>":"")+"</div><p>"+summary+"</p><div class='feature-bottom'><span class='feature-swatches' aria-label='Coloris disponibles'>"+swatches.map(color=>"<i style='--swatch:"+color+"'></i>").join("")+"</span><a class='feature-model-link' href='"+url+"'>"+ctaLabel+"&nbsp; →</a></div></div></article>";
+    return "<article class='feature-card'><a href='"+url+"' class='feature-img'><img src='"+featuredImage+"' alt='Photo du "+esc(p.short.toLowerCase())+" vierge, sans impression, MADE BY ALGERIANS'><span class='feature-tag'>"+badge+"</span><span class='feature-arrow' aria-hidden='true'>→</span></a><div class='feature-copy'><div class='feature-title-row'><h3>"+title+"</h3>"+(showPrice?"<strong>"+money(p.price)+"</strong>":"")+"</div><p>"+summary+"</p><p class='feature-availability'>"+(coming?"Présentation de la coupe · Nouveaux designs à venir":"HOUMTI oversize · Commandable")+"</p><div class='feature-bottom'><span class='feature-swatches' aria-label='Coloris disponibles'>"+swatches.map(color=>"<i style='--swatch:"+color+"'></i>").join("")+"</span><a class='feature-model-link' href='"+url+"'>"+ctaLabel+"&nbsp; →</a></div></div></article>";
   }
   function relatedProducts() {
     return "<section class='section related-products' id='nos-produits'><div class='section-head'><div class='eyebrow'>MADE BY ALGERIANS</div><h2>NOS PRODUITS</h2><p>Explorez les autres modèles de la collection.</p></div><div class='featured-grid'>"+featureCard("regular","REGULAR")+featureCard("oversize","OVERSIZE")+featureCard("hoodie","HOODIE")+featureCard("tote","TOTEBAG")+"</div></section>";
@@ -282,7 +344,7 @@
       "<section class='b2b-band'><div class='wrap b2b-band-inner'><div><div class='eyebrow'>ENTREPRISES · RESTAURANTS · PETITS BUSINESS · ÉQUIPES</div><h2>Votre activité mérite une identité textile cohérente.</h2><p>Vêtements d’équipe, polos, tabliers, totebags et séries personnalisées : nous accompagnons votre projet professionnel de la création graphique à la livraison.</p></div><a class='btn btn-green' href='professionnels.html'>Accéder à l’espace professionnel&nbsp; →</a></div></section>");
   }
   function shop() {
-    frame("shop", "<section class='page-hero'><div class='wrap'><div class='eyebrow'>MADE BY ALGERIANS · BOUTIQUE</div><h1>La collection à votre image.</h1><p>Des vêtements imprimés avec des designs inspirés de l’Algérie, et un pack de polos unis à composer selon vos coloris préférés.</p></div></section><div class='wrap'><div class='breadcrumbs'><a href='index.html'>Accueil</a> / Boutique</div><section class='section boutique-products' style='padding-top:22px'><div class='section-head'><div class='eyebrow'>LES ESSENTIELS</div><h2>Choisissez votre produit</h2><p>Découvrez nos coupes et nos accessoires, puis accédez à la page dédiée à chaque modèle.</p></div><div class='featured-grid'>"+featureCard("regular","T-shirt classique",false,"Découvrir la page")+featureCard("oversize","Oversize",false,"Découvrir la page")+featureCard("hoodie","Confort épais",false,"Découvrir la page")+featureCard("tote","Format pratique",false,"Découvrir la page")+"</div></section><section class='promo'><div class='promo-inner'><div class='promo-copy'><div class='eyebrow'>Offre pack</div><h2>3 polos unis · 7 500 DA</h2><p>Trois couleurs au choix, une seule taille pour le pack et livraison offerte partout en Algérie.</p><a class='btn btn-light' href='polo-pack.html'>Voir le pack polos →</a></div><div class='promo-visual'><img class='promo-model' src='assets/amine-polo-green-bottle.webp' alt='Polo vert bouteille porté'><img class='promo-model second' src='assets/amine-polo-black-v2.webp' alt='Polo noir porté'></div></div></section><section class='section'><div class='section-head'><div class='eyebrow'>La collection imprimée</div><h2>Des pièces inspirées d’ici</h2><p>Les modèles oversize Casbah, Bab El Oued, Saint-Eugène – Bologhine et Belcourt – Belouizdad sont disponibles en beige et en noir. Découvrez leurs visuels et choisissez votre taille.</p></div><p class='notice'>Les modèles oversize Casbah, Bab El Oued, Saint-Eugène – Bologhine et Belcourt – Belouizdad sont ouverts à la commande en beige et en noir.</p></section></div>");
+    frame("shop", "<section class='page-hero'><div class='wrap'><div class='eyebrow'>MADE BY ALGERIANS · BOUTIQUE</div><h1>La collection à votre image.</h1><p>Des vêtements imprimés avec des designs inspirés de l’Algérie, et un pack de polos unis à composer selon vos coloris préférés.</p></div></section><div class='wrap'><div class='breadcrumbs'><a href='index.html'>Accueil</a> / Boutique</div><section class='section boutique-products' style='padding-top:22px'><div class='section-head'><div class='eyebrow'>LES ESSENTIELS</div><h2>Choisissez votre produit</h2><p>Découvrez nos coupes et nos accessoires, puis accédez à la page dédiée à chaque modèle.</p></div><div class='featured-grid'>"+featureCard("regular","T-shirt classique",true,"Découvrir la page")+featureCard("oversize","Oversize",true,"Découvrir la page")+featureCard("hoodie","Confort épais",true,"Découvrir la page")+featureCard("tote","Format pratique",true,"Découvrir la page")+"</div></section><section class='promo'><div class='promo-inner'><div class='promo-copy'><div class='eyebrow'>Offre pack</div><h2>3 polos unis · 7 500 DA</h2><p>Trois couleurs au choix, une seule taille pour le pack et livraison offerte partout en Algérie.</p><a class='btn btn-light' href='polo-pack.html'>Voir le pack polos →</a></div><div class='promo-visual'><img class='promo-model' src='assets/amine-polo-green-bottle.webp' alt='Polo vert bouteille porté'><img class='promo-model second' src='assets/amine-polo-black-v2.webp' alt='Polo noir porté'></div></div></section><section class='section'><div class='section-head'><div class='eyebrow'>La collection imprimée</div><h2>Des pièces inspirées d’ici</h2><p>Les modèles oversize Casbah, Bab El Oued, Saint-Eugène – Bologhine et Belcourt – Belouizdad sont disponibles en beige et en noir. Découvrez leurs visuels et choisissez votre taille.</p></div><p class='notice'>Les modèles oversize Casbah, Bab El Oued, Saint-Eugène – Bologhine et Belcourt – Belouizdad sont ouverts à la commande en beige et en noir.</p></section></div>");
   }
   function art(light) {
     return "<div class='design-art "+(light?"light":"")+"'><svg viewBox='0 0 120 140' aria-hidden='true'><path d='M32 14 12 23 4 54l21 8 8-16v80h54V46l8 16 21-8-8-31-20-9-10 10H42z' fill='#ddd' stroke='#fff' stroke-width='3' stroke-linejoin='round'/><path d='M44 22c4 12 28 12 32 0' fill='none' stroke='#fff' stroke-width='2'/></svg><span>Visuel du design à intégrer</span><i>Préparation</i></div>";
@@ -342,7 +404,7 @@
     frame("shop", "<section class='page-hero'><div class='wrap'><div class='eyebrow'>MADE BY ALGERIANS · NOS DESIGNS</div><h1>"+c.title+"</h1><p>Explorez nos collections HOUMTI et Humour DZ, puis choisissez le modèle qui vous correspond.</p></div></section><div class='wrap'><div class='breadcrumbs'><a href='index.html'>Accueil</a> / <a href='boutique.html'>Boutique</a> / "+esc(p.short)+"</div>"+sections+relatedProducts()+"</div>");
   }
   function productCollectionPage(p,key,collectionKey) {
-    const collection=productCollections[collectionKey], c=categories.find(x=>x.key===key);
+    const collection=Object.hasOwn(productCollections,collectionKey)?productCollections[collectionKey]:null, c=categories.find(x=>x.key===key);
     if(!collection){location.replace(c.url);return;}
     document.title=collection.title+" · "+p.short;
     frame("shop", "<section class='page-hero'><div class='wrap'><div class='eyebrow'>"+esc(p.short)+" · "+collection.label+"</div><h1>"+collection.title+"</h1><p>"+collection.description+"</p></div></section><div class='wrap'><div class='breadcrumbs'><a href='index.html'>Accueil</a> / <a href='"+c.url+"'>"+esc(p.short)+"</a> / "+collection.title+"</div><section class='section collection-all'><div class='collection-empty'><div class='eyebrow'>BIENTÔT EN BOUTIQUE</div><h2>Les modèles arrivent bientôt.</h2><p>Les visuels de cette collection pour le "+esc(p.short.toLowerCase())+" sont en préparation. Revenez bientôt pour découvrir les modèles et leurs options.</p></div><a class='btn btn-outline collection-back' href='"+c.url+"'>Retour aux collections&nbsp; →</a></section></div>");
@@ -353,7 +415,7 @@
     return "<article class='collection-buy-card'><a class='collection-buy-image' href='"+m.route.replaceAll("&","&amp;")+"'><img src='"+A+m.image+"' alt='"+esc(m.name)+" en noir, vue de dos'></a><div class='collection-buy-info'><div class='eyebrow'>HOUMTI · " +esc(m.collection)+"</div><h2>"+esc(m.name)+"</h2><p>"+esc(m.description)+"</p><strong class='collection-price'>"+money(p.price)+"</strong><div class='collection-buy-options'><label>Coloris<select id='collection-color-"+key+"'><option value='Noir'>Noir</option><option value='Beige'>Beige</option></select></label><label>Taille<select id='collection-size-"+key+"'><option value=''>Choisir</option>"+sizes+"</select></label></div><button class='btn collection-add-button' type='button' data-collection-model='"+key+"'>Ajouter au panier&nbsp; +</button><a class='text-link' href='"+m.route.replaceAll("&","&amp;") +"'>Voir les photos du modèle →</a></div></article>";
   }
   function oversizeCollectionPage(p,key) {
-    const collection=oversizeCollections[key];
+    const collection=Object.hasOwn(oversizeCollections,key)?oversizeCollections[key]:null;
     if(!collection){location.replace("tshirt-oversize.html");return;}
     document.title=collection.title+" · T-shirts oversize";
     const cards=collection.models.map(model=>collectionBuyCard(model,p)).join("");
@@ -363,7 +425,6 @@
       const id=button.dataset.collectionModel,model=oversizeModels[id],color=document.getElementById("collection-color-"+id).value,size=document.getElementById("collection-size-"+id).value;
       if(!size){toast("Choisissez une taille.");return;}
       addCart({id:"tshirt-oversize-"+id+"-"+color+"-"+size,name:model.name,price:p.price,qty:1,details:"Collection HOUMTI · Couleur : "+color+" · Taille : "+size,image:A+model.image.replace("black",color==="Beige"?"beige":"black")});
-      const count=document.querySelector(".cart-count");if(count)count.textContent=String(cart.reduce((total,item)=>total+item.qty,0));
       toast(model.name+" ajouté au panier.");
     }));
   }
@@ -377,6 +438,7 @@
   }
   function productDetail() {
     const q=new URLSearchParams(location.search), key=q.get("type")||"regular", n=(q.get("design")||"01").padStart(2,"0"), p=products[key]||products.regular;
+    if(!categories.some(item=>item.key===key)||key==="polo"){location.replace("boutique.html");return;}
     if(key==="oversize"&&q.has("collection")) { oversizeCollectionPage(p,q.get("collection")); return; }
     if(key!=="oversize"&&q.has("collection")) { productCollectionPage(p,key,q.get("collection")); return; }
     if(key==="oversize"&&q.get("design")==="bab-el-oued") { babElOuedDetail(p); return; }
@@ -451,15 +513,44 @@
     [1,"Adrar",1300,900],[2,"Chlef",900,450],[3,"Laghouat",950,500],[4,"Oum El Bouaghi",850,450],[5,"Batna",900,450],[6,"Béjaïa",800,450],[7,"Biskra",950,450],[8,"Béchar",1000,650],[9,"Blida",600,400],[10,"Bouira",800,450],[11,"Tamanrasset",1500,950],[12,"Tébessa",900,450],[13,"Tlemcen",900,450],[14,"Tiaret",850,450],[15,"Tizi Ouzou",750,450],[16,"Alger",400,200],[17,"Djelfa",950,500],[18,"Jijel",900,450],[19,"Sétif",800,450],[20,"Saïda",900,450],[21,"Skikda",900,450],[22,"Sidi Bel Abbès",900,450],[23,"Annaba",850,450],[24,"Guelma",900,450],[25,"Constantine",800,450],[26,"Médéa",800,450],[27,"Mostaganem",900,450],[28,"M’Sila",850,500],[29,"Mascara",900,450],[30,"Ouargla",950,600],[31,"Oran",800,400],[32,"El Bayadh",1100,600],[33,"Illizi",1700,1100],[34,"Bordj Bou Arreridj",800,450],[35,"Boumerdès",600,400],[36,"El Tarf",850,450],[37,"Tindouf",1300,800],[38,"Tissemsilt",900,450],[39,"El Oued",950,600],[40,"Khenchela",900,450],[41,"Souk Ahras",900,450],[42,"Tipaza",700,450],[43,"Mila",900,450],[44,"Aïn Defla",900,450],[45,"Naâma",1000,550],[46,"Aïn Témouchent",900,450],[47,"Ghardaïa",950,550],[48,"Relizane",900,450],[49,"Timimoun",1200,800],[50,"Bordj Badji Mokhtar",1200,0],[51,"Ouled Djellal",950,550],[52,"Beni Abbes",1000,900],[53,"In Salah",1500,1000],[54,"In Guezzam",1500,0],[55,"Touggourt",950,600],[56,"Djanet",2450,1750],[57,"El M’Ghair",950,650],[58,"El Meniaa",950,600]
   ];
   function cartPage() {
-    const items=cart.map((x,i)=>"<article class='cart-line'><div class='cart-thumb'>"+esc(x.name)+"</div><div><h3>"+esc(x.name)+"</h3><p>"+esc(x.details||"")+"</p><p>"+money(x.price)+" · Qté "+x.qty+"</p></div><div><strong>"+money(x.price*x.qty)+"</strong><br><button type='button' data-remove='"+i+"'>Retirer</button></div></article>").join("");
-    const subtotal=cart.reduce((s,x)=>s+x.price*x.qty,0), poloOnly=cart.length>0&&cart.every(x=>x.deliveryFree), hasPolo=cart.some(x=>x.deliveryFree);
+    const renderLines=()=>cart.map((x,i)=>"<article class='cart-line'><div class='cart-thumb'>"+(x.image?"<img src='"+esc(x.image)+"' alt='"+esc(x.name)+"' loading='lazy' decoding='async'>":"MBA")+"</div><div><h3>"+esc(x.name)+"</h3><p>"+esc(x.details)+"</p><p>"+money(x.price)+" l’unité</p><div class='quantity-controls' role='group' aria-label='Quantité pour "+esc(x.name)+"'><button type='button' data-quantity='"+i+"' data-step='-1' aria-label='Réduire la quantité de "+esc(x.name)+"' "+(x.qty===1?"disabled":"")+">−</button><span>"+x.qty+"</span><button type='button' data-quantity='"+i+"' data-step='1' aria-label='Augmenter la quantité de "+esc(x.name)+"' "+(x.qty===99?"disabled":"")+">+</button></div></div><div><strong>"+money(x.price*x.qty)+"</strong><br><button type='button' data-remove='"+i+"' aria-label='Retirer "+esc(x.name)+"'>Retirer</button></div></article>").join("")||"<div class='empty-state'>Votre panier est vide. <a href='boutique.html'><strong>Découvrir la boutique →</strong></a></div>";
+    const items=renderLines();
+    let subtotal=cart.reduce((sum,item)=>sum+item.price*item.qty,0), poloOnly=cart.length>0&&cart.every(item=>item.deliveryFree), hasPolo=cart.some(item=>item.deliveryFree);
     const wilayaOptions=shippingRates.map(([code,name])=>"<option value='"+code+"'>"+String(code).padStart(2,"0")+" · "+esc(name)+"</option>").join("");
-    frame("shop", "<section class='page-hero'><div class='wrap'><div class='eyebrow'>VOTRE SÉLECTION</div><h1>Panier &amp; commande</h1><p>Choisissez votre wilaya et le mode de livraison : les frais et le total estimé se mettent à jour automatiquement.</p></div></section><div class='wrap'><div class='breadcrumbs'><a href='index.html'>Accueil</a> / <a href='boutique.html'>Boutique</a> / Panier</div><section class='section' style='padding-top:16px'><div class='checkout-grid'><div class='panel'><h2>Votre panier</h2><div id='cart-lines' class='cart-list'>"+(items||"<div class='empty-state'>Votre panier est vide. <a href='boutique.html'><strong>Découvrir la boutique →</strong></a></div>")+"</div><p style='margin:17px 0 0'><a class='btn btn-outline btn-small' href='boutique.html'>Continuer mes achats</a></p></div><div class='panel'><h2>Vos coordonnées</h2><div class='total-row'><span>Sous-total des articles</span><strong>"+money(subtotal)+"</strong></div><div class='total-row'><span>Livraison</span><strong id='delivery-price'>"+(poloOnly?"Offerte":"À calculer")+"</strong></div><p class='notice' style='margin:12px 0'>"+(poloOnly?"La livraison du pack de trois polos est offerte.":hasPolo?"La livraison du pack polo est offerte; les autres articles sont tarifés selon la wilaya et le mode choisis.":"Le tarif s’affiche dès que vous choisissez votre wilaya et votre mode de livraison.")+" <a href='livraison.html'><strong>Voir le barème complet&nbsp; →</strong></a></p><form id='checkout-form'><div class='form-grid'><div class='form-field'><label for='client-name'>Nom et prénom *</label><input id='client-name' required autocomplete='name'></div><div class='form-field'><label for='client-phone'>Téléphone *</label><input id='client-phone' required type='tel' autocomplete='tel'></div><div class='form-field'><label for='client-wilaya'>Wilaya *</label><select id='client-wilaya' required><option value=''>Choisir une wilaya</option>"+wilayaOptions+"</select></div><div class='form-field'><label for='client-delivery-mode'>Mode de livraison *</label><select id='client-delivery-mode' required><option value=''>Choisir</option><option value='home'>À domicile</option><option value='desk'>Stop Desk</option></select></div><div class='form-field'><label for='client-city'>Commune *</label><input id='client-city' required></div><div class='form-field'><label for='client-address'>Adresse / agence *</label><input id='client-address' required autocomplete='street-address'></div><div class='form-field full'><label for='client-note'>Précision (facultatif)</label><textarea id='client-note'></textarea></div></div><div class='total-row'><span>Sous-total des articles</span><strong>"+money(subtotal)+"</strong></div><div class='total-row'><span>Frais de livraison</span><strong id='delivery-line-total'>"+(poloOnly?"Offerts":"À calculer")+"</strong></div><div class='total-row total'><span>Total estimé</span><strong id='grand-total'>"+money(subtotal+(poloOnly?0:0))+"</strong></div><button class='btn btn-green' type='submit' style='width:100%' "+(cart.length?"":"disabled")+">Vérifier et continuer&nbsp; →</button><p style='margin:10px 0 0;color:var(--muted);font-size:9px;line-height:1.7'>Aucun paiement en ligne. Le total affiché comprend les articles et les frais de livraison indiqués pour votre wilaya. Un mode non proposé pour une destination est signalé comme indisponible.</p></form></div></div></section></div>");
-    const updateShipping=()=>{const code=Number(document.getElementById("client-wilaya").value),mode=document.getElementById("client-delivery-mode").value;let amount=null,unavailable=false;if(poloOnly)amount=0;else if(code&&mode){const row=shippingRates.find(x=>x[0]===code),rate=row?(mode==="home"?row[2]:row[3]):null;if(rate===0){unavailable=true;}else amount=rate;}const label=unavailable?"Indisponible":amount===null?"À calculer":poloOnly&&amount===0?"Offerte":money(amount);document.getElementById("delivery-price").textContent=label;document.getElementById("delivery-line-total").textContent=unavailable?"Indisponible":amount===null?"À calculer":poloOnly&&amount===0?"Offerts":money(amount);document.getElementById("grand-total").textContent=money(subtotal+(amount||0));return unavailable?-1:amount;};
+    frame("shop", "<section class='page-hero'><div class='wrap'><div class='eyebrow'>VOTRE SÉLECTION</div><h1>Panier &amp; commande</h1><p>Choisissez votre wilaya et le mode de livraison : les frais et le total estimé se mettent à jour automatiquement.</p></div></section><div class='wrap'><div class='breadcrumbs'><a href='index.html'>Accueil</a> / <a href='boutique.html'>Boutique</a> / Panier</div><section class='section' style='padding-top:16px'><div class='checkout-grid'><div class='panel'><h2>Votre panier</h2><div id='cart-lines' class='cart-list'>"+(items||"<div class='empty-state'>Votre panier est vide. <a href='boutique.html'><strong>Découvrir la boutique →</strong></a></div>")+"</div><p style='margin:17px 0 0'><a class='btn btn-outline btn-small' href='boutique.html'>Continuer mes achats</a></p></div><div class='panel'><h2>Vos coordonnées</h2><div class='total-row'><span>Sous-total des articles</span><strong data-subtotal>"+money(subtotal)+"</strong></div><div class='total-row'><span>Livraison</span><strong id='delivery-price'>"+(poloOnly?"Offerte":"À calculer")+"</strong></div><p class='notice' id='shipping-note' style='margin:12px 0'>"+(poloOnly?"La livraison du pack de trois polos est offerte.":hasPolo?"La livraison du pack polo est offerte; les autres articles sont tarifés selon la wilaya et le mode choisis.":"Le tarif s’affiche dès que vous choisissez votre wilaya et votre mode de livraison.")+" <a href='livraison.html'><strong>Voir le barème complet&nbsp; →</strong></a></p><form id='checkout-form'><div class='form-grid'><div class='form-field'><label for='client-name'>Nom et prénom *</label><input id='client-name' required autocomplete='name'></div><div class='form-field'><label for='client-phone'>Téléphone *</label><input id='client-phone' required type='tel' autocomplete='tel'></div><div class='form-field'><label for='client-wilaya'>Wilaya *</label><select id='client-wilaya' required><option value=''>Choisir une wilaya</option>"+wilayaOptions+"</select></div><div class='form-field'><label for='client-delivery-mode'>Mode de livraison *</label><select id='client-delivery-mode' required aria-describedby='shipping-explanation'><option value=''>Choisir</option><option value='home'>À domicile</option><option value='desk'>Stop Desk</option></select><p id='shipping-explanation'></p></div><div class='form-field'><label for='client-city'>Commune *</label><input id='client-city' required></div><div class='form-field'><label for='client-address'>Adresse / agence *</label><input id='client-address' required autocomplete='street-address'></div><div class='form-field full'><label for='client-note'>Précision (facultatif)</label><textarea id='client-note'></textarea></div></div><div class='total-row'><span>Sous-total des articles</span><strong data-subtotal>"+money(subtotal)+"</strong></div><div class='total-row'><span>Frais de livraison</span><strong id='delivery-line-total'>"+(poloOnly?"Offerts":"À calculer")+"</strong></div><div class='total-row total'><span>Total estimé</span><strong id='grand-total'>"+money(subtotal+(poloOnly?0:0))+"</strong></div><p id='shipping-status' class='sr-only' role='status' aria-live='polite' aria-atomic='true'></p><button class='btn btn-green' type='submit' style='width:100%' "+(cart.length?"":"disabled")+">Vérifier et continuer&nbsp; →</button><p style='margin:10px 0 0;color:var(--muted);font-size:9px;line-height:1.7'>Aucun paiement en ligne. Le total affiché comprend les articles et les frais de livraison indiqués pour votre wilaya. Un mode non proposé pour une destination est signalé comme indisponible.</p></form></div></div></section></div>");
+    const updateShipping=()=>{
+      const code=Number(document.getElementById("client-wilaya").value),mode=document.getElementById("client-delivery-mode").value;
+      const row=shippingRates.find(item=>item[0]===code);
+      const deskUnavailable=!!row&&row[3]===0;
+      const explanation=deskUnavailable?"Le Stop Desk est indisponible pour cette wilaya. Choisissez la livraison à domicile.":"";
+      document.getElementById("shipping-explanation").textContent=explanation;
+      let amount=null,unavailable=deskUnavailable&&mode==="desk";
+      if(!unavailable){if(poloOnly)amount=0;else if(row&&mode)amount=mode==="home"?row[2]:row[3];}
+      const label=unavailable?"Indisponible":amount===null?"À calculer":poloOnly?"Offerte":money(amount);
+      document.getElementById("delivery-price").textContent=label;
+      document.getElementById("delivery-line-total").textContent=poloOnly&&amount===0?"Offerts":label;
+      document.getElementById("grand-total").textContent=amount===null||unavailable?"Livraison à choisir":money(subtotal+amount);
+      const announcement=unavailable?explanation+" Sous-total des articles : "+money(subtotal)+". Total en attente du choix de livraison.":amount===null?"Sous-total des articles : "+money(subtotal)+". Livraison à choisir pour connaître le total.":"Livraison : "+label+". Total estimé : "+money(subtotal+amount)+".";
+      const status=document.getElementById("shipping-status");if(status.textContent!==announcement)status.textContent=announcement;
+      return unavailable?-1:amount;
+    };
     document.getElementById("client-wilaya").addEventListener("change",updateShipping);
     document.getElementById("client-delivery-mode").addEventListener("change",updateShipping);
     updateShipping();
-    document.getElementById("cart-lines").addEventListener("click",e=>{const b=e.target.closest("[data-remove]");if(!b)return;cart.splice(Number(b.dataset.remove),1);saveCart();location.reload();});
+    document.getElementById("cart-lines").addEventListener("click",event=>{
+      const button=event.target.closest("[data-remove],[data-quantity]");if(!button)return;
+      const index=Number(button.dataset.remove??button.dataset.quantity),removed=button.hasAttribute("data-remove"),step=Number(button.dataset.step);
+      if(removed)cart.splice(index,1);else cart[index].qty=Math.max(1,Math.min(99,cart[index].qty+step));
+      saveCart();
+      subtotal=cart.reduce((sum,item)=>sum+item.price*item.qty,0);poloOnly=cart.length>0&&cart.every(item=>item.deliveryFree);hasPolo=cart.some(item=>item.deliveryFree);
+      document.getElementById("cart-lines").innerHTML=renderLines();
+      document.querySelectorAll("[data-subtotal]").forEach(node=>node.textContent=money(subtotal));
+      document.querySelector("#checkout-form button[type='submit']").disabled=!cart.length;
+      document.getElementById("shipping-note").innerHTML=(poloOnly?"La livraison du pack de trois polos est offerte.":hasPolo?"La livraison du pack polo est offerte ; les autres articles sont tarifés selon votre destination.":"Le tarif s’affiche dès que vous choisissez votre wilaya et votre mode de livraison.")+" <a href='livraison.html'>Voir le barème complet →</a>";
+      enhanceInterface();updateShipping();
+      const replacement=removed?document.querySelector("[data-remove='"+Math.min(index,cart.length-1)+"']"):document.querySelector("[data-quantity='"+index+"'][data-step='"+step+"']:not([disabled])");
+      (replacement||document.querySelector("#cart-lines a,.quantity-controls button:not([disabled])")||document.querySelector("#client-name"))?.focus();
+    });
     document.getElementById("checkout-form").addEventListener("submit",e=>{e.preventDefault();if(!cart.length){toast("Votre panier est vide.");return}const deliveryAmount=updateShipping();if(deliveryAmount===-1){toast("Le Stop Desk n’est pas disponible pour cette wilaya. Choisissez la livraison à domicile.");return}if(deliveryAmount===null){toast("Choisissez votre wilaya et votre mode de livraison.");return}const val=id=>document.getElementById(id).value.trim();const selectedWilaya=shippingRates.find(x=>x[0]===Number(val("client-wilaya")));const delivery=poloOnly?"Offerte":money(deliveryAmount);const total=subtotal+deliveryAmount;const lines=cart.map(x=>"• "+x.qty+" × "+x.name+" — "+x.details+" — "+money(x.price*x.qty)).join("\n");const text=["Salam MADE BY ALGERIANS, je souhaite confirmer cette commande avec paiement à la livraison.","",lines,"","Sous-total articles : "+money(subtotal),"Mode : "+(val("client-delivery-mode")==="home"?"À domicile":"Stop Desk"),"Livraison : "+delivery,"Total estimé : "+money(total),"","Nom : "+val("client-name"),"Téléphone : "+val("client-phone"),"Wilaya : "+selectedWilaya[1],"Commune : "+val("client-city"),"Adresse / agence : "+val("client-address"),val("client-note")?"Précision : "+val("client-note"):""].filter(Boolean).join("\n");sessionStorage.setItem("mba-order-message",text);sessionStorage.setItem("mba-order-total",money(total));location.href="confirmation.html";});
   }
   function help() {
@@ -475,8 +566,16 @@
     const url="https://wa.me/213792323644?text="+encodeURIComponent(message);
     frame("shop", "<section class='page-hero'><div class='wrap'><div class='eyebrow'>DERNIÈRE ÉTAPE</div><h1>Votre récapitulatif est prêt.</h1><p>La commande n’est pas encore transmise. Envoyez le message WhatsApp pour que notre équipe puisse la vérifier et vous rappeler.</p></div></section><div class='wrap'><section class='section'><div class='panel' style='max-width:660px;margin:auto;text-align:center'><div class='eyebrow' style='justify-content:center'>Paiement à la livraison</div><h2 style='margin-top:15px'>Confirmez avec notre équipe</h2><p style='color:var(--muted);font-size:11px;line-height:1.8'>Vérifiez votre panier et vos coordonnées dans WhatsApp, puis appuyez sur Envoyer. L’équipe vous appellera pour confirmer les articles et les frais de livraison avant préparation.</p><a class='btn btn-green' href='"+url+"' target='_blank' rel='noreferrer'>Envoyer le récapitulatif WhatsApp&nbsp; →</a><p style='margin:15px 0 0'><a class='btn btn-outline btn-small' href='commande.html'>Revenir au panier</a> &nbsp; <a class='btn btn-outline btn-small' href='index.html'>Retour à l’accueil</a></p></div></section></div>");
   }
-  function addCart(item) { cart.push(item); saveCart(); }
-  function saveCart(){localStorage.setItem(cartKey,JSON.stringify(cart));}
+  function addCart(item) {
+    const previous=cart.find(line=>line.id===item.id);
+    if(previous)previous.qty=Math.min(99,previous.qty+item.qty);else cart.push(item);
+    saveCart();
+  }
+  function saveCart(){
+    cart=normalizeCart(cart);
+    try{localStorage.setItem(cartKey,JSON.stringify(cart));}catch(_){toast("Le stockage du panier est indisponible. Gardez cette page ouverte pendant votre commande.");}
+    refreshCartPreview();
+  }
   function toast(msg){const el=document.getElementById("toast");if(!el)return;el.textContent=msg;el.classList.add("show");setTimeout(()=>el.classList.remove("show"),2300);}
   if(page==="home")home();else if(page==="shop")shop();else if(page==="category")categoryPage(type);else if(page==="product")productDetail();else if(page==="polo")polos();else if(page==="cart")cartPage();else if(page==="help")help();else if(page==="delivery")deliveryPage();else if(page==="confirmation")confirmation();
 })();
